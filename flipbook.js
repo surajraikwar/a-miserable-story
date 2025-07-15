@@ -240,11 +240,43 @@ class DigitalFlipbook {
     const book = document.querySelector('.book');
     
     if (this.isMobile) {
-      // Simple fade transition for mobile
-      book.style.opacity = '0';
+      // Smooth swipe animation for mobile
+      const page = this.leftPage;
+      const pageContent = page.querySelector('.page-content');
+      
+      // Store current content
+      const currentContent = pageContent.innerHTML;
+      
+      // Add swipe out animation
+      if (direction === 'next') {
+        page.style.transform = 'translateX(-110%) scale(0.95)';
+        page.style.opacity = '0';
+      } else {
+        page.style.transform = 'translateX(110%) scale(0.95)';
+        page.style.opacity = '0';
+      }
+      
+      // After swipe out, update content and swipe in
       setTimeout(() => {
+        // Update page content
         callback();
-        book.style.opacity = '1';
+        
+        // Reset and prepare for slide in
+        page.style.transition = 'none';
+        if (direction === 'next') {
+          page.style.transform = 'translateX(100%)';
+        } else {
+          page.style.transform = 'translateX(-100%)';
+        }
+        page.style.opacity = '0';
+        
+        // Force reflow
+        page.offsetHeight;
+        
+        // Slide in new page
+        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+        page.style.transform = 'translateX(0)';
+        page.style.opacity = '1';
       }, 300);
     } else {
       // 3D page flip for desktop
@@ -283,25 +315,70 @@ class DigitalFlipbook {
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
+    let isDragging = false;
     
     const bookWrapper = document.querySelector('.book-wrapper');
+    const page = this.leftPage;
     
     bookWrapper.addEventListener('touchstart', (e) => {
+      if (this.isAnimating) return;
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
+      isDragging = true;
+      
+      // Add transition for smooth dragging
+      if (this.isMobile) {
+        page.style.transition = 'none';
+      }
     }, { passive: true });
     
     bookWrapper.addEventListener('touchmove', (e) => {
-      // Prevent pull-to-refresh on mobile
-      if (this.isMobile && e.touches[0].clientY > touchStartY) {
+      if (!isDragging || this.isAnimating || !this.isMobile) return;
+      
+      const currentX = e.touches[0].clientX;
+      const diffX = currentX - touchStartX;
+      const diffY = Math.abs(e.touches[0].clientY - touchStartY);
+      
+      // Only track horizontal swipes
+      if (Math.abs(diffX) > diffY) {
         e.preventDefault();
+        
+        // Visual feedback during swipe
+        const maxDrag = window.innerWidth * 0.3;
+        const dragPercent = Math.min(Math.max(diffX / window.innerWidth, -0.3), 0.3);
+        const opacity = 1 - Math.abs(dragPercent) * 2;
+        
+        page.style.transform = `translateX(${diffX}px) scale(${1 - Math.abs(dragPercent) * 0.1})`;
+        page.style.opacity = opacity;
       }
     }, { passive: false });
     
     bookWrapper.addEventListener('touchend', (e) => {
+      if (!isDragging || this.isAnimating) return;
+      isDragging = false;
+      
       touchEndX = e.changedTouches[0].clientX;
       touchEndY = e.changedTouches[0].clientY;
+      
+      // Re-enable transitions
+      if (this.isMobile) {
+        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+      }
+      
       this.handleSwipe();
+    }, { passive: true });
+    
+    // Handle touch cancel (e.g., when call comes in)
+    bookWrapper.addEventListener('touchcancel', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      // Reset page position
+      if (this.isMobile) {
+        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+        page.style.transform = 'translateX(0) scale(1)';
+        page.style.opacity = '1';
+      }
     }, { passive: true });
     
     const handleSwipe = () => {
@@ -318,6 +395,11 @@ class DigitalFlipbook {
           // Swipe right - previous page
           this.turnPage('prev');
         }
+      } else if (this.isMobile) {
+        // Reset page position if swipe wasn't completed
+        const page = this.leftPage;
+        page.style.transform = 'translateX(0) scale(1)';
+        page.style.opacity = '1';
       }
     };
     

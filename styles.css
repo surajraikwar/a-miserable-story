@@ -445,45 +445,92 @@ body {
 
 /* Swipe Animation for Mobile */
 @media (max-width: 768px) {
+  /* Page transition animations */
+  .page {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  }
+  
   .page.swipe-left {
-    animation: swipeLeft 0.3s ease-out;
+    animation: swipeLeft 0.3s ease-out forwards;
   }
   
   .page.swipe-right {
-    animation: swipeRight 0.3s ease-out;
+    animation: swipeRight 0.3s ease-out forwards;
+  }
+  
+  .page.slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+  }
+  
+  .page.slide-in-right {
+    animation: slideInRight 0.3s ease-out;
   }
   
   @keyframes swipeLeft {
-    from {
-      transform: translateX(0);
+    0% {
+      transform: translateX(0) scale(1);
       opacity: 1;
     }
-    to {
-      transform: translateX(-100%);
+    100% {
+      transform: translateX(-110%) scale(0.95);
       opacity: 0;
     }
   }
   
   @keyframes swipeRight {
-    from {
-      transform: translateX(0);
+    0% {
+      transform: translateX(0) scale(1);
       opacity: 1;
     }
-    to {
-      transform: translateX(100%);
+    100% {
+      transform: translateX(110%) scale(0.95);
       opacity: 0;
     }
   }
   
-  /* Better scrolling on mobile */
-  .page {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+  @keyframes slideInLeft {
+    0% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInRight {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
   
   /* Prevent horizontal scroll on mobile */
   body {
     overflow-x: hidden;
+  }
+  
+  /* Add shadow during swipe */
+  .page.swipe-left::after,
+  .page.swipe-right::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, 
+      transparent 0%, 
+      rgba(0,0,0,0.1) 50%, 
+      transparent 100%);
+    pointer-events: none;
   }
 }
 
