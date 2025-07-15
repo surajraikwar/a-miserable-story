@@ -1,30 +1,53 @@
-// Digital Flipbook with Dynamic Content Loading
-class DigitalFlipbook {
+// Enhanced Digital Flipbook with Advanced Features
+class EnhancedDigitalFlipbook {
   constructor() {
-    // State
+    // State management
     this.currentPage = 1;
     this.totalPages = 0;
     this.isAnimating = false;
     this.isMobile = window.innerWidth <= 768;
     
-    // DOM Elements
-    this.bookCover = document.getElementById('book-cover');
-    this.bookContainer = document.getElementById('book-container');
-    this.leftPage = document.getElementById('left-page');
-    this.rightPage = document.getElementById('right-page');
-    this.currentPageSpan = document.getElementById('current-page');
-    this.totalPagesSpan = document.getElementById('total-pages');
-    this.mobileCurrentPageSpan = document.getElementById('mobile-current-page');
-    this.mobileTotalPagesSpan = document.getElementById('mobile-total-pages');
-    this.prevBtn = document.querySelector('.prev-btn');
-    this.nextBtn = document.querySelector('.next-btn');
-    this.openBookBtn = document.querySelector('.open-book-btn');
-    
-    // Book content
+    // Book data
     this.bookMetadata = null;
     this.chapters = [];
     this.pages = [];
     this.loadedChapters = new Map();
+    this.pageMap = new Map(); // Maps page numbers to chapters
+    
+    // DOM elements
+    this.loadingScreen = document.getElementById('loading-screen');
+    this.bookCover = document.getElementById('book-cover');
+    this.tableOfContents = document.getElementById('table-of-contents');
+    this.bookContainer = document.getElementById('book-container');
+    this.leftPage = document.getElementById('left-page');
+    this.rightPage = document.getElementById('right-page');
+    this.leftContent = document.getElementById('left-content');
+    this.rightContent = document.getElementById('right-content');
+    this.leftPageNumber = document.getElementById('left-page-number');
+    this.rightPageNumber = document.getElementById('right-page-number');
+    this.currentPageSpan = document.getElementById('current-page');
+    this.totalPagesSpan = document.getElementById('total-pages');
+    this.mobileCurrentPageSpan = document.getElementById('mobile-current-page');
+    this.mobileTotalPagesSpan = document.getElementById('mobile-total-pages');
+    this.progressFill = document.getElementById('progress-fill');
+    this.progressText = document.getElementById('progress-text');
+    this.pageFlipOverlay = document.getElementById('page-flip-overlay');
+    
+    // Button elements
+    this.openBookBtn = document.getElementById('open-book-btn');
+    this.prevBtn = document.getElementById('prev-btn');
+    this.nextBtn = document.getElementById('next-btn');
+    this.menuBtn = document.getElementById('menu-btn');
+    this.closeBookBtn = document.getElementById('close-book-btn');
+    this.closeTocBtn = document.getElementById('close-toc');
+    this.startReadingBtn = document.getElementById('start-reading-btn');
+    
+    // Touch handling
+    this.touchStartX = 0;
+    this.touchStartY = 0;
+    this.touchEndX = 0;
+    this.touchEndY = 0;
+    this.isDragging = false;
     
     // Initialize
     this.init();
@@ -32,27 +55,58 @@ class DigitalFlipbook {
   
   async init() {
     try {
-      // Load book metadata first
+      // Show loading screen
+      this.showLoading();
+      
+      // Load book metadata and process content
       await this.loadBookMetadata();
+      await this.processAllChapters();
       
-      // Event listeners
-      this.openBookBtn.addEventListener('click', () => this.openBook());
-      this.prevBtn.addEventListener('click', () => this.turnPage('prev'));
-      this.nextBtn.addEventListener('click', () => this.turnPage('next'));
+      // Hide loading screen
+      this.hideLoading();
       
-      // Touch events for mobile
+      // Setup event listeners
+      this.setupEventListeners();
+      
+      // Setup touch events for mobile
       this.setupTouchEvents();
       
-      // Keyboard navigation
-      document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+      // Setup keyboard navigation
+      this.setupKeyboardEvents();
       
-      // Window resize handler
-      window.addEventListener('resize', () => this.handleResize());
+      // Setup resize handler
+      this.setupResizeHandler();
+      
+      console.log('Enhanced Digital Flipbook initialized successfully');
       
     } catch (error) {
       console.error('Failed to initialize book:', error);
       this.showError('Failed to load book content. Please refresh the page.');
     }
+  }
+  
+  showLoading() {
+    this.loadingScreen.classList.remove('hidden');
+    const progressBar = document.querySelector('.loading-progress');
+    let progress = 0;
+    
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+      }
+      progressBar.style.width = progress + '%';
+    }, 100);
+  }
+  
+  hideLoading() {
+    setTimeout(() => {
+      this.loadingScreen.style.opacity = '0';
+      setTimeout(() => {
+        this.loadingScreen.classList.add('hidden');
+      }, 500);
+    }, 500);
   }
   
   async loadBookMetadata() {
@@ -63,26 +117,50 @@ class DigitalFlipbook {
       this.bookMetadata = await response.json();
       this.chapters = this.bookMetadata.chapters;
       
-      // Set book title and author dynamically
-      const coverTitle = this.bookCover.querySelector('h1');
-      const coverAuthor = this.bookCover.querySelector('.author');
-      if (coverTitle) coverTitle.textContent = this.bookMetadata.title;
-      if (coverAuthor) coverAuthor.textContent = `By ${this.bookMetadata.author}`;
-      
-      // Calculate total pages (each chapter is spread across multiple pages)
-      this.totalPages = this.chapters.length;
-      
-      // Update page counters
-      this.totalPagesSpan.textContent = this.totalPages;
-      if (this.mobileTotalPagesSpan) {
-        this.mobileTotalPagesSpan.textContent = this.totalPages;
-      }
+      // Update cover with metadata
+      this.updateCover();
       
     } catch (error) {
       console.error('Failed to load book metadata:', error);
-      // Fallback to demo content
       this.setupDemoContent();
     }
+  }
+  
+  updateCover() {
+    if (!this.bookMetadata) return;
+    
+    const title = this.bookCover.querySelector('.book-title');
+    const author = this.bookCover.querySelector('.book-author');
+    
+    if (title) title.textContent = this.bookMetadata.title;
+    if (author) author.textContent = `By ${this.bookMetadata.author}`;
+  }
+  
+  async processAllChapters() {
+    this.pages = [];
+    this.pageMap.clear();
+    let pageNumber = 1;
+    
+    for (const chapter of this.chapters) {
+      const chapterData = await this.loadChapter(chapter.id);
+      const chapterPages = this.paginateChapter(chapterData, chapter.id);
+      
+      // Map each page to its chapter
+      for (const page of chapterPages) {
+        this.pageMap.set(pageNumber, {
+          chapterId: chapter.id,
+          chapterTitle: chapter.title,
+          pageData: page
+        });
+        pageNumber++;
+      }
+      
+      this.pages.push(...chapterPages);
+    }
+    
+    this.totalPages = this.pages.length;
+    this.updatePageCounters();
+    this.generateTableOfContents();
   }
   
   async loadChapter(chapterId) {
@@ -98,138 +176,334 @@ class DigitalFlipbook {
       if (!response.ok) throw new Error(`Failed to load ${chapter.file}`);
       
       const chapterData = await response.json();
+      this.loadedChapters.set(chapterId, chapterData);
       
-      // Process chapter content into formatted HTML
-      const formattedContent = this.formatChapterContent(chapterData);
-      
-      this.loadedChapters.set(chapterId, formattedContent);
-      this.pages[chapterId - 1] = formattedContent;
-      
-      return formattedContent;
+      return chapterData;
       
     } catch (error) {
       console.error(`Failed to load chapter ${chapterId}:`, error);
-      // Return placeholder content
       return {
         title: `Chapter ${chapterId}`,
-        content: `<h2>Chapter ${chapterId}</h2><p>Content could not be loaded.</p>`
+        content: [`Content could not be loaded for Chapter ${chapterId}.`]
       };
     }
   }
   
-  formatChapterContent(chapterData) {
-    const title = `<h2>${chapterData.title}</h2>`;
-    const content = chapterData.content
-      .map(paragraph => `<p>${paragraph}</p>`)
-      .join('');
+  paginateChapter(chapterData, chapterId) {
+    const pages = [];
+    const wordsPerPage = 250; // Optimal reading experience
     
-    return {
-      title: chapterData.title,
-      content: title + content,
-      raw: chapterData.content
-    };
-  }
-  
-  setupDemoContent() {
-    // Fallback demo content if JSON files can't be loaded
-    this.chapters = [
-      { id: 1, title: "Chapter 1: Demo", file: "chapter1.json" }
-    ];
-    this.totalPages = 1;
-    this.totalPagesSpan.textContent = this.totalPages;
-    if (this.mobileTotalPagesSpan) {
-      this.mobileTotalPagesSpan.textContent = this.totalPages;
+    // Format content with rich text
+    const formattedContent = this.formatRichText(chapterData.content);
+    
+    // Split content into pages
+    let currentPage = '';
+    let currentWordCount = 0;
+    let isFirstPage = true;
+    
+    for (const paragraph of formattedContent) {
+      const words = paragraph.split(' ').length;
+      
+      if (currentWordCount + words > wordsPerPage && currentPage.length > 0) {
+        // Save current page
+        pages.push({
+          chapterId,
+          content: isFirstPage ? 
+            `<h1>${chapterData.title}</h1>${currentPage}` : 
+            currentPage,
+          isFirstPage,
+          wordCount: currentWordCount
+        });
+        
+        // Start new page
+        currentPage = `<p>${paragraph}</p>`;
+        currentWordCount = words;
+        isFirstPage = false;
+      } else {
+        currentPage += `<p>${paragraph}</p>`;
+        currentWordCount += words;
+      }
     }
     
-    this.pages = [{
-      title: "Demo Chapter",
-      content: "<h2>Demo Chapter</h2><p>This is demo content. Please ensure the content files are properly loaded.</p>"
-    }];
-  }
-  
-  async openBook() {
-    // Load first chapter before opening
-    if (this.pages.length === 0 && this.chapters.length > 0) {
-      await this.loadChapter(1);
+    // Add remaining content
+    if (currentPage.length > 0) {
+      pages.push({
+        chapterId,
+        content: isFirstPage ? 
+          `<h1>${chapterData.title}</h1>${currentPage}` : 
+          currentPage,
+        isFirstPage,
+        wordCount: currentWordCount
+      });
     }
     
-    // Animate book opening
-    this.bookCover.style.transform = 'rotateY(-180deg)';
+    return pages;
+  }
+  
+  formatRichText(content) {
+    return content.map(paragraph => {
+      let formatted = paragraph;
+      
+      // Format scenes (bold text between ** **)
+      formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<span class="scene">$1</span>');
+      
+      // Format dialogue (italic text between * *)
+      formatted = formatted.replace(/\*(.*?)\*/g, '<span class="dialogue">$1</span>');
+      
+      // Format emphasis (italic text between _ _)
+      formatted = formatted.replace(/_(.*?)_/g, '<em>$1</em>');
+      
+      // Format strong text (bold text between __ __)
+      formatted = formatted.replace(/__(.*?)__/g, '<strong>$1</strong>');
+      
+      return formatted;
+    });
+  }
+  
+  generateTableOfContents() {
+    const tocList = document.getElementById('toc-list');
+    const chapterList = document.getElementById('chapter-list');
+    
+    if (!tocList || !chapterList) return;
+    
+    tocList.innerHTML = '';
+    chapterList.innerHTML = '';
+    
+    this.chapters.forEach(chapter => {
+      // Find pages for this chapter
+      const chapterPages = [];
+      for (const [pageNum, pageData] of this.pageMap.entries()) {
+        if (pageData.chapterId === chapter.id) {
+          chapterPages.push(pageNum);
+        }
+      }
+      
+      const startPage = chapterPages.length > 0 ? chapterPages[0] : 1;
+      const endPage = chapterPages.length > 0 ? chapterPages[chapterPages.length - 1] : 1;
+      
+      // Create TOC item
+      const tocItem = document.createElement('div');
+      tocItem.className = 'toc-item';
+      tocItem.innerHTML = `
+        <div class="toc-number">${chapter.id}</div>
+        <div class="toc-title">${chapter.title}</div>
+        <div class="toc-pages">${startPage}${endPage !== startPage ? `-${endPage}` : ''}</div>
+      `;
+      tocItem.addEventListener('click', () => this.jumpToPage(startPage));
+      tocList.appendChild(tocItem);
+      
+      // Create chapter list item for modal
+      const chapterItem = document.createElement('div');
+      chapterItem.className = 'chapter-item';
+      chapterItem.innerHTML = `
+        <div class="chapter-number">${chapter.id}</div>
+        <div class="chapter-title">${chapter.title}</div>
+      `;
+      chapterItem.addEventListener('click', () => {
+        this.jumpToPage(startPage);
+        this.hideModal();
+      });
+      chapterList.appendChild(chapterItem);
+    });
+  }
+  
+  setupEventListeners() {
+    // Cover and navigation
+    this.openBookBtn.addEventListener('click', () => this.openBook());
+    this.prevBtn.addEventListener('click', () => this.turnPage('prev'));
+    this.nextBtn.addEventListener('click', () => this.turnPage('next'));
+    this.menuBtn.addEventListener('click', () => this.showTableOfContents());
+    this.closeBookBtn.addEventListener('click', () => this.closeBook());
+    this.closeTocBtn.addEventListener('click', () => this.hideTableOfContents());
+    this.startReadingBtn.addEventListener('click', () => this.startReading());
+    
+    // Modal controls
+    const modalClose = document.getElementById('modal-close');
+    const chapterModal = document.getElementById('chapter-modal');
+    
+    if (modalClose) {
+      modalClose.addEventListener('click', () => this.hideModal());
+    }
+    
+    if (chapterModal) {
+      chapterModal.addEventListener('click', (e) => {
+        if (e.target === chapterModal) this.hideModal();
+      });
+    }
+  }
+  
+  setupTouchEvents() {
+    const bookWrapper = document.getElementById('book-wrapper');
+    if (!bookWrapper) return;
+    
+    bookWrapper.addEventListener('touchstart', (e) => {
+      if (this.isAnimating) return;
+      
+      this.touchStartX = e.touches[0].clientX;
+      this.touchStartY = e.touches[0].clientY;
+      this.isDragging = true;
+      
+      // Add visual feedback
+      if (this.isMobile) {
+        this.leftPage.style.transition = 'none';
+      }
+    }, { passive: true });
+    
+    bookWrapper.addEventListener('touchmove', (e) => {
+      if (!this.isDragging || this.isAnimating || !this.isMobile) return;
+      
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const diffX = currentX - this.touchStartX;
+      const diffY = Math.abs(currentY - this.touchStartY);
+      
+      // Only track horizontal swipes
+      if (Math.abs(diffX) > diffY && Math.abs(diffX) > 10) {
+        e.preventDefault();
+        
+        // Visual feedback during swipe
+        const dragPercent = Math.min(Math.max(diffX / window.innerWidth, -0.3), 0.3);
+        const opacity = 1 - Math.abs(dragPercent) * 1.5;
+        const scale = 1 - Math.abs(dragPercent) * 0.05;
+        
+        this.leftPage.style.transform = `translateX(${diffX * 0.3}px) scale(${scale})`;
+        this.leftPage.style.opacity = opacity;
+      }
+    }, { passive: false });
+    
+    bookWrapper.addEventListener('touchend', (e) => {
+      if (!this.isDragging || this.isAnimating) return;
+      
+      this.isDragging = false;
+      this.touchEndX = e.changedTouches[0].clientX;
+      this.touchEndY = e.changedTouches[0].clientY;
+      
+      // Re-enable transitions
+      if (this.isMobile) {
+        this.leftPage.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+      }
+      
+      this.handleSwipe();
+    }, { passive: true });
+    
+    bookWrapper.addEventListener('touchcancel', () => {
+      if (!this.isDragging) return;
+      
+      this.isDragging = false;
+      
+      // Reset page position
+      if (this.isMobile) {
+        this.leftPage.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+        this.leftPage.style.transform = 'translateX(0) scale(1)';
+        this.leftPage.style.opacity = '1';
+      }
+    }, { passive: true });
+  }
+  
+  handleSwipe() {
+    const swipeThreshold = 50;
+    const diffX = this.touchStartX - this.touchEndX;
+    const diffY = Math.abs(this.touchStartY - this.touchEndY);
+    
+    // Only register horizontal swipes
+    if (Math.abs(diffX) > swipeThreshold && diffY < 100) {
+      if (diffX > 0) {
+        // Swipe left - next page
+        this.turnPage('next');
+      } else {
+        // Swipe right - previous page
+        this.turnPage('prev');
+      }
+    } else if (this.isMobile) {
+      // Reset page position if swipe wasn't completed
+      this.leftPage.style.transform = 'translateX(0) scale(1)';
+      this.leftPage.style.opacity = '1';
+    }
+  }
+  
+  setupKeyboardEvents() {
+    document.addEventListener('keydown', (e) => {
+      if (this.bookContainer.classList.contains('hidden')) return;
+      
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          this.turnPage('prev');
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          this.turnPage('next');
+          break;
+        case 'Escape':
+          e.preventDefault();
+          this.closeBook();
+          break;
+        case 'Enter':
+          if (e.target.classList.contains('toc-item')) {
+            e.target.click();
+          }
+          break;
+      }
+    });
+  }
+  
+  setupResizeHandler() {
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const wasMobile = this.isMobile;
+        this.isMobile = window.innerWidth <= 768;
+        
+        if (wasMobile !== this.isMobile) {
+          this.loadCurrentPages();
+        }
+      }, 250);
+    });
+  }
+  
+  openBook() {
+    this.bookCover.style.transform = 'perspective(1000px) rotateY(-15deg) scale(0.8)';
     this.bookCover.style.opacity = '0';
     
     setTimeout(() => {
       this.bookCover.classList.add('hidden');
-      this.bookContainer.classList.remove('hidden');
-      this.bookContainer.style.display = 'block';
-      
-      // Load initial pages
-      this.loadPages();
-      
-      // Show swipe hint on mobile
-      if (this.isMobile) {
-        setTimeout(() => {
-          const hint = document.querySelector('.swipe-hint');
-          if (hint) hint.style.animation = 'fadeInOut 3s ease forwards';
-        }, 1000);
-      }
+      this.showTableOfContents();
     }, 600);
   }
   
-  async loadPages() {
-    // Ensure current chapter is loaded
-    const currentChapter = Math.min(this.currentPage, this.chapters.length);
-    if (!this.pages[currentChapter - 1]) {
-      await this.loadChapter(currentChapter);
-    }
-    
-    if (this.isMobile) {
-      this.loadSinglePage();
-    } else {
-      this.loadSpread();
-    }
-    
+  showTableOfContents() {
+    this.tableOfContents.classList.remove('hidden');
+    this.bookContainer.classList.add('hidden');
+  }
+  
+  hideTableOfContents() {
+    this.tableOfContents.classList.add('hidden');
+    this.bookCover.classList.remove('hidden');
+    this.bookCover.style.transform = 'perspective(1000px) rotateY(0deg) scale(1)';
+    this.bookCover.style.opacity = '1';
+  }
+  
+  startReading() {
+    this.tableOfContents.classList.add('hidden');
+    this.bookContainer.classList.remove('hidden');
+    this.currentPage = 1;
+    this.loadCurrentPages();
     this.updateNavigation();
+    this.updateProgress();
+    
+    // Show swipe hint on mobile
+    if (this.isMobile) {
+      const swipeHint = document.getElementById('swipe-hint');
+      if (swipeHint) {
+        swipeHint.style.animation = 'fadeInOut 4s ease';
+      }
+    }
   }
   
-  loadSinglePage() {
-    const pageData = this.pages[this.currentPage - 1];
-    if (pageData) {
-      this.leftPage.querySelector('.page-content').innerHTML = pageData.content;
-      this.leftPage.querySelector('.page-number').textContent = this.currentPage;
-    }
-    this.rightPage.style.display = 'none';
-  }
-  
-  async loadSpread() {
-    // For desktop, show current chapter on left, next chapter on right
-    let leftPageNum = this.currentPage;
-    let rightPageNum = Math.min(this.currentPage + 1, this.totalPages);
-    
-    // Load left page
-    if (!this.pages[leftPageNum - 1]) {
-      await this.loadChapter(leftPageNum);
-    }
-    const leftPageData = this.pages[leftPageNum - 1];
-    if (leftPageData) {
-      this.leftPage.querySelector('.page-content').innerHTML = leftPageData.content;
-      this.leftPage.querySelector('.page-number').textContent = leftPageNum;
-      this.leftPage.style.display = 'block';
-    }
-    
-    // Load right page
-    if (rightPageNum <= this.totalPages) {
-      if (!this.pages[rightPageNum - 1]) {
-        await this.loadChapter(rightPageNum);
-      }
-      const rightPageData = this.pages[rightPageNum - 1];
-      if (rightPageData) {
-        this.rightPage.querySelector('.page-content').innerHTML = rightPageData.content;
-        this.rightPage.querySelector('.page-number').textContent = rightPageNum;
-        this.rightPage.style.display = 'block';
-      }
-    } else {
-      this.rightPage.style.display = 'none';
-    }
+  closeBook() {
+    this.bookContainer.classList.add('hidden');
+    this.showTableOfContents();
   }
   
   turnPage(direction) {
@@ -253,42 +527,36 @@ class DigitalFlipbook {
       }
       
       // Load new pages
-      this.loadPages();
+      this.loadCurrentPages();
+      this.updateNavigation();
+      this.updateProgress();
+      
       this.isAnimating = false;
     });
   }
   
   animatePageTurn(direction, callback) {
-    const book = document.querySelector('.book');
-    
     if (this.isMobile) {
-      // Smooth swipe animation for mobile
+      // Enhanced mobile animation
       const page = this.leftPage;
-      const pageContent = page.querySelector('.page-content');
       
-      // Store current content
-      const currentContent = pageContent.innerHTML;
-      
-      // Add swipe out animation
       if (direction === 'next') {
-        page.style.transform = 'translateX(-110%) scale(0.95)';
+        page.style.transform = 'translateX(-100%) scale(0.9)';
         page.style.opacity = '0';
       } else {
-        page.style.transform = 'translateX(110%) scale(0.95)';
+        page.style.transform = 'translateX(100%) scale(0.9)';
         page.style.opacity = '0';
       }
       
-      // After swipe out, update content and swipe in
       setTimeout(() => {
-        // Update page content
         callback();
         
         // Reset and prepare for slide in
         page.style.transition = 'none';
         if (direction === 'next') {
-          page.style.transform = 'translateX(100%)';
+          page.style.transform = 'translateX(100%) scale(0.9)';
         } else {
-          page.style.transform = 'translateX(-100%)';
+          page.style.transform = 'translateX(-100%) scale(0.9)';
         }
         page.style.opacity = '0';
         
@@ -296,32 +564,87 @@ class DigitalFlipbook {
         page.offsetHeight;
         
         // Slide in new page
-        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-        page.style.transform = 'translateX(0)';
+        page.style.transition = 'transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s ease';
+        page.style.transform = 'translateX(0) scale(1)';
         page.style.opacity = '1';
-      }, 300);
+      }, 400);
     } else {
-      // 3D page flip for desktop
+      // Enhanced desktop 3D animation
+      const pageToFlip = direction === 'next' ? this.rightPage : this.leftPage;
+      
+      pageToFlip.classList.add('flipping');
+      this.pageFlipOverlay.style.opacity = '1';
+      
       if (direction === 'next') {
-        this.rightPage.classList.add('flipping');
-        this.rightPage.style.transform = 'rotateY(-180deg)';
+        pageToFlip.style.transform = 'rotateY(-180deg)';
       } else {
-        this.leftPage.classList.add('flipping');
-        this.leftPage.style.transform = 'rotateY(180deg)';
+        pageToFlip.style.transform = 'rotateY(180deg)';
       }
       
       setTimeout(() => {
         callback();
-        this.leftPage.classList.remove('flipping');
-        this.rightPage.classList.remove('flipping');
-        this.leftPage.style.transform = '';
-        this.rightPage.style.transform = '';
-      }, 600);
+        
+        // Reset flip state
+        pageToFlip.classList.remove('flipping');
+        pageToFlip.style.transform = '';
+        this.pageFlipOverlay.style.opacity = '0';
+      }, 800);
     }
   }
   
+  loadCurrentPages() {
+    if (this.isMobile) {
+      this.loadSinglePage();
+    } else {
+      this.loadSpread();
+    }
+  }
+  
+  loadSinglePage() {
+    const pageData = this.pageMap.get(this.currentPage);
+    if (pageData) {
+      this.leftContent.innerHTML = pageData.pageData.content;
+      this.leftPageNumber.textContent = this.currentPage;
+    }
+    this.rightPage.style.display = 'none';
+  }
+  
+  loadSpread() {
+    // Load left page
+    const leftPageData = this.pageMap.get(this.currentPage);
+    if (leftPageData) {
+      this.leftContent.innerHTML = leftPageData.pageData.content;
+      this.leftPageNumber.textContent = this.currentPage;
+      this.leftPage.style.display = 'block';
+    }
+    
+    // Load right page
+    const rightPageNum = this.currentPage + 1;
+    const rightPageData = this.pageMap.get(rightPageNum);
+    if (rightPageData && rightPageNum <= this.totalPages) {
+      this.rightContent.innerHTML = rightPageData.pageData.content;
+      this.rightPageNumber.textContent = rightPageNum;
+      this.rightPage.style.display = 'block';
+    } else {
+      this.rightPage.style.display = 'none';
+    }
+  }
+  
+  jumpToPage(pageNumber) {
+    if (pageNumber < 1 || pageNumber > this.totalPages) return;
+    
+    this.currentPage = pageNumber;
+    this.loadCurrentPages();
+    this.updateNavigation();
+    this.updateProgress();
+    
+    // Close table of contents and show book
+    this.hideTableOfContents();
+    this.bookContainer.classList.remove('hidden');
+  }
+  
   updateNavigation() {
-    // Update page indicator
+    // Update page indicators
     this.currentPageSpan.textContent = this.currentPage;
     if (this.mobileCurrentPageSpan) {
       this.mobileCurrentPageSpan.textContent = this.currentPage;
@@ -332,127 +655,81 @@ class DigitalFlipbook {
     this.nextBtn.disabled = this.currentPage >= this.totalPages;
   }
   
-  setupTouchEvents() {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    let isDragging = false;
-    
-    const bookWrapper = document.querySelector('.book-wrapper');
-    const page = this.leftPage;
-    
-    bookWrapper.addEventListener('touchstart', (e) => {
-      if (this.isAnimating) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      isDragging = true;
-      
-      // Add transition for smooth dragging
-      if (this.isMobile) {
-        page.style.transition = 'none';
-      }
-    }, { passive: true });
-    
-    bookWrapper.addEventListener('touchmove', (e) => {
-      if (!isDragging || this.isAnimating || !this.isMobile) return;
-      
-      const currentX = e.touches[0].clientX;
-      const diffX = currentX - touchStartX;
-      const diffY = Math.abs(e.touches[0].clientY - touchStartY);
-      
-      // Only track horizontal swipes
-      if (Math.abs(diffX) > diffY) {
-        e.preventDefault();
-        
-        // Visual feedback during swipe
-        const maxDrag = window.innerWidth * 0.3;
-        const dragPercent = Math.min(Math.max(diffX / window.innerWidth, -0.3), 0.3);
-        const opacity = 1 - Math.abs(dragPercent) * 2;
-        
-        page.style.transform = `translateX(${diffX}px) scale(${1 - Math.abs(dragPercent) * 0.1})`;
-        page.style.opacity = opacity;
-      }
-    }, { passive: false });
-    
-    bookWrapper.addEventListener('touchend', (e) => {
-      if (!isDragging || this.isAnimating) return;
-      isDragging = false;
-      
-      touchEndX = e.changedTouches[0].clientX;
-      touchEndY = e.changedTouches[0].clientY;
-      
-      // Re-enable transitions
-      if (this.isMobile) {
-        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-      }
-      
-      this.handleSwipe();
-    }, { passive: true });
-    
-    // Handle touch cancel (e.g., when call comes in)
-    bookWrapper.addEventListener('touchcancel', (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      
-      // Reset page position
-      if (this.isMobile) {
-        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-        page.style.transform = 'translateX(0) scale(1)';
-        page.style.opacity = '1';
-      }
-    }, { passive: true });
-    
-    const handleSwipe = () => {
-      const swipeThreshold = 50;
-      const diffX = touchStartX - touchEndX;
-      const diffY = Math.abs(touchStartY - touchEndY);
-      
-      // Only register horizontal swipes (ignore vertical swipes)
-      if (Math.abs(diffX) > swipeThreshold && diffY < 100) {
-        if (diffX > 0) {
-          // Swipe left - next page
-          this.turnPage('next');
-        } else {
-          // Swipe right - previous page
-          this.turnPage('prev');
-        }
-      } else if (this.isMobile) {
-        // Reset page position if swipe wasn't completed
-        const page = this.leftPage;
-        page.style.transform = 'translateX(0) scale(1)';
-        page.style.opacity = '1';
-      }
-    };
-    
-    this.handleSwipe = handleSwipe;
+  updateProgress() {
+    const progress = Math.round((this.currentPage / this.totalPages) * 100);
+    this.progressFill.style.width = progress + '%';
+    this.progressText.textContent = progress + '%';
   }
   
-  handleKeyboard(e) {
-    if (e.key === 'ArrowLeft') {
-      this.turnPage('prev');
-    } else if (e.key === 'ArrowRight') {
-      this.turnPage('next');
+  updatePageCounters() {
+    this.totalPagesSpan.textContent = this.totalPages;
+    if (this.mobileTotalPagesSpan) {
+      this.mobileTotalPagesSpan.textContent = this.totalPages;
     }
   }
   
-  handleResize() {
-    const wasMobile = this.isMobile;
-    this.isMobile = window.innerWidth <= 768;
-    
-    if (wasMobile !== this.isMobile) {
-      // Reload pages with new layout
-      this.loadPages();
+  hideModal() {
+    const modal = document.getElementById('chapter-modal');
+    if (modal) {
+      modal.classList.add('hidden');
     }
+  }
+  
+  setupDemoContent() {
+    // Fallback demo content
+    this.chapters = [
+      { id: 1, title: "Demo Chapter", file: "demo.json" }
+    ];
+    
+    this.pages = [{
+      chapterId: 1,
+      content: '<h1>Demo Chapter</h1><p>This is demo content. Please ensure the content files are properly loaded.</p>',
+      isFirstPage: true,
+      wordCount: 15
+    }];
+    
+    this.pageMap.set(1, {
+      chapterId: 1,
+      chapterTitle: "Demo Chapter",
+      pageData: this.pages[0]
+    });
+    
+    this.totalPages = 1;
+    this.updatePageCounters();
+    this.generateTableOfContents();
   }
   
   showError(message) {
     console.error(message);
-    // You can implement a user-friendly error display here
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #e74c3c;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 10000;
+      font-family: 'Open Sans', sans-serif;
+      text-align: center;
+      max-width: 400px;
+    `;
+    errorDiv.innerHTML = `
+      <h3 style="margin: 0 0 10px 0;">Error</h3>
+      <p style="margin: 0;">${message}</p>
+    `;
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+      document.body.removeChild(errorDiv);
+    }, 5000);
   }
 }
 
-// Initialize flipbook when DOM is loaded
+// Initialize the enhanced flipbook when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new DigitalFlipbook();
+  new EnhancedDigitalFlipbook();
 });

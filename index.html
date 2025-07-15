@@ -3,69 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Flipbook - Interactive Book Experience</title>
+    <title>A Miserable Story - Interactive Digital Book</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="book-icon">📖</div>
+            <h2>Loading your book...</h2>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Book Cover -->
     <div id="book-cover" class="book-cover">
+        <div class="cover-background">
+            <img src="https://images.unsplash.com/photo-1706271948813-4d2c904af4d8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwzfHxkcmFtYXRpYyUyMGJvb2slMjBjb3ZlcnxlbnwwfHx8Ymx1ZXwxNzUyNTkzMTA5fDA&ixlib=rb-4.1.0&q=85" alt="Book Cover" class="cover-image">
+            <div class="cover-overlay"></div>
+        </div>
         <div class="cover-content">
-            <h1>A Miserable Story</h1>
-            <p class="author">By Suraj Raikwar</p>
-            <div class="cover-decoration"></div>
-            <button class="open-book-btn">Open Book</button>
+            <div class="book-spine"></div>
+            <div class="cover-text">
+                <h1 class="book-title">A Miserable Story</h1>
+                <p class="book-author">By Suraj Raikwar</p>
+                <div class="cover-decoration">
+                    <div class="decoration-line"></div>
+                    <div class="decoration-diamond">◆</div>
+                    <div class="decoration-line"></div>
+                </div>
+                <p class="book-subtitle">An Interactive Digital Experience</p>
+            </div>
+            <button class="open-book-btn" id="open-book-btn">
+                <span class="btn-text">Open Book</span>
+                <span class="btn-icon">📖</span>
+            </button>
+        </div>
+        <div class="cover-shadow"></div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div id="table-of-contents" class="table-of-contents hidden">
+        <div class="toc-header">
+            <h2>Table of Contents</h2>
+            <button class="close-toc" id="close-toc">×</button>
+        </div>
+        <div class="toc-content">
+            <div class="toc-list" id="toc-list">
+                <!-- Chapters will be loaded dynamically -->
+            </div>
+        </div>
+        <div class="toc-footer">
+            <button class="start-reading-btn" id="start-reading-btn">Start Reading</button>
         </div>
     </div>
 
     <!-- Book Container -->
     <div id="book-container" class="book-container hidden">
-        <!-- Mobile Page Indicator -->
-        <div class="mobile-page-indicator">
-            Page <span id="mobile-current-page">1</span> of <span id="mobile-total-pages">10</span>
+        <!-- Progress Bar -->
+        <div class="reading-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span class="progress-text" id="progress-text">0%</span>
         </div>
         
         <!-- Navigation Controls -->
         <div class="navigation">
-            <button class="nav-btn prev-btn" aria-label="Previous page">
+            <button class="nav-btn menu-btn" id="menu-btn" aria-label="Table of Contents">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                </svg>
+            </button>
+            <button class="nav-btn prev-btn" id="prev-btn" aria-label="Previous page">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                 </svg>
             </button>
-            <span class="page-indicator">Page <span id="current-page">1</span> of <span id="total-pages">10</span></span>
-            <button class="nav-btn next-btn" aria-label="Next page">
+            <span class="page-indicator">
+                <span id="current-page">1</span> / <span id="total-pages">1</span>
+            </span>
+            <button class="nav-btn next-btn" id="next-btn" aria-label="Next page">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+            <button class="nav-btn close-btn" id="close-book-btn" aria-label="Close book">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                 </svg>
             </button>
         </div>
 
         <!-- Book Pages -->
-        <div class="book-wrapper">
-            <div class="book">
+        <div class="book-wrapper" id="book-wrapper">
+            <div class="book" id="book">
                 <!-- Left Page -->
                 <div class="page left-page" id="left-page">
-                    <div class="page-content">
+                    <div class="page-content" id="left-content">
                         <!-- Content will be dynamically loaded -->
                     </div>
-                    <div class="page-number left"></div>
+                    <div class="page-number left" id="left-page-number"></div>
                 </div>
 
                 <!-- Right Page -->
                 <div class="page right-page" id="right-page">
-                    <div class="page-content">
+                    <div class="page-content" id="right-content">
                         <!-- Content will be dynamically loaded -->
                     </div>
-                    <div class="page-number right"></div>
+                    <div class="page-number right" id="right-page-number"></div>
                 </div>
 
                 <!-- Page flip animation overlay -->
-                <div class="page-flip-overlay hidden"></div>
+                <div class="page-flip-overlay" id="page-flip-overlay"></div>
             </div>
         </div>
 
-        <!-- Mobile swipe indicator -->
-        <div class="swipe-hint mobile-only">
-            <span>Swipe to turn pages</span>
+        <!-- Mobile Controls -->
+        <div class="mobile-controls">
+            <div class="mobile-page-indicator" id="mobile-page-indicator">
+                <span id="mobile-current-page">1</span> / <span id="mobile-total-pages">1</span>
+            </div>
+            <div class="swipe-hint" id="swipe-hint">
+                <span>← Swipe to turn pages →</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chapter Selection Modal -->
+    <div id="chapter-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Jump to Chapter</h3>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="chapter-list" id="chapter-list">
+                    <!-- Chapter list will be populated here -->
+                </div>
+            </div>
         </div>
     </div>
 

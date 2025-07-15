@@ -1,0 +1,24 @@
+{
+  "name": "digital-flipbook",
+  "version": "1.0.0",
+  "description": "A digital flipbook application",
+  "main": "index.html",
+  "scripts": {
+    "start": "gh-pages -d .",
+    "deploy": "gh-pages -d ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surajraikwar/digital-flipbook.git"
+  },
+  "keywords": [
+    "digital",
+    "flipbook",
+    "web"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gh-pages": "^5.0.0"
+  }
+}
