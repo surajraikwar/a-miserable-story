@@ -2,7 +2,7 @@
 class DigitalFlipbook {
   constructor() {
     // State
-    this.currentPage = 1;
+    this.currentPage = 0;
     this.totalPages = 0;
     this.isAnimating = false;
     this.isMobile = window.innerWidth <= 768;
@@ -71,6 +71,7 @@ class DigitalFlipbook {
       
       // Calculate total pages (each chapter is spread across multiple pages)
       this.totalPages = this.chapters.length;
+      this.totalPages = this.isMobile ? this.chapters.length : Math.ceil(this.chapters.length / 2) * 2;
       
       // Update page counters
       this.totalPagesSpan.textContent = this.totalPages;
@@ -203,21 +204,26 @@ class DigitalFlipbook {
   async loadSpread() {
     // For desktop, show current chapter on left, next chapter on right
     let leftPageNum = this.currentPage;
-    let rightPageNum = Math.min(this.currentPage + 1, this.totalPages);
+    let rightPageNum = this.currentPage + 1;
     
     // Load left page
-    if (!this.pages[leftPageNum - 1]) {
-      await this.loadChapter(leftPageNum);
-    }
-    const leftPageData = this.pages[leftPageNum - 1];
-    if (leftPageData) {
-      this.leftPage.querySelector('.page-content').innerHTML = leftPageData.content;
-      this.leftPage.querySelector('.page-number').textContent = leftPageNum;
-      this.leftPage.style.display = 'block';
+    if (leftPageNum > 0 && leftPageNum <= this.chapters.length) {
+      if (!this.pages[leftPageNum - 1]) {
+        await this.loadChapter(leftPageNum);
+      }
+      const leftPageData = this.pages[leftPageNum - 1];
+      if (leftPageData) {
+        this.leftPage.querySelector('.page-content').innerHTML = leftPageData.content;
+        this.leftPage.querySelector('.page-number').textContent = leftPageNum;
+        this.leftPage.style.display = 'block';
+      }
+    } else {
+      this.leftPage.querySelector('.page-content').innerHTML = '';
+      this.leftPage.querySelector('.page-number').textContent = '';
     }
     
     // Load right page
-    if (rightPageNum <= this.totalPages) {
+    if (rightPageNum <= this.chapters.length) {
       if (!this.pages[rightPageNum - 1]) {
         await this.loadChapter(rightPageNum);
       }
@@ -228,14 +234,16 @@ class DigitalFlipbook {
         this.rightPage.style.display = 'block';
       }
     } else {
-      this.rightPage.style.display = 'none';
+      this.rightPage.querySelector('.page-content').innerHTML = '';
+      this.rightPage.querySelector('.page-number').textContent = '';
+      this.rightPage.style.display = 'block';
     }
   }
   
   turnPage(direction) {
     if (this.isAnimating) return;
     
-    const canTurnPrev = this.currentPage > 1;
+    const canTurnPrev = this.currentPage > 0;
     const canTurnNext = this.currentPage < this.totalPages;
     
     if (direction === 'prev' && !canTurnPrev) return;
@@ -247,7 +255,7 @@ class DigitalFlipbook {
     this.animatePageTurn(direction, () => {
       // Update current page
       if (direction === 'prev') {
-        this.currentPage = this.isMobile ? this.currentPage - 1 : Math.max(1, this.currentPage - 2);
+        this.currentPage = this.isMobile ? this.currentPage - 1 : Math.max(0, this.currentPage - 2);
       } else {
         this.currentPage = this.isMobile ? this.currentPage + 1 : Math.min(this.totalPages, this.currentPage + 2);
       }
@@ -322,13 +330,17 @@ class DigitalFlipbook {
   
   updateNavigation() {
     // Update page indicator
-    this.currentPageSpan.textContent = this.currentPage;
+    let displayPage = this.isMobile ? this.currentPage : this.currentPage;
+    if (this.currentPage === 0) displayPage = 0;
+    if (this.currentPage > this.totalPages) displayPage = this.totalPages;
+
+    this.currentPageSpan.textContent = displayPage;
     if (this.mobileCurrentPageSpan) {
-      this.mobileCurrentPageSpan.textContent = this.currentPage;
+      this.mobileCurrentPageSpan.textContent = displayPage;
     }
     
     // Update button states
-    this.prevBtn.disabled = this.currentPage <= 1;
+    this.prevBtn.disabled = this.currentPage <= 0;
     this.nextBtn.disabled = this.currentPage >= this.totalPages;
   }
   

@@ -1,13 +1,13 @@
 /* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Open+Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Roboto:wght@400;500&display=swap');
 
 /* CSS Variables */
 :root {
-  --primary-color: #2c3e50;
-  --secondary-color: #34495e;
-  --accent-color: #e74c3c;
-  --text-color: #333333;
-  --page-bg: #fdfdf8;
+  --primary-color: #3a3a3a;
+  --secondary-color: #5a5a5a;
+  --accent-color: #c0392b;
+  --text-color: #2c2c2c;
+  --page-bg: #f5f2e9;
   --paper-texture: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Cfilter id="paper"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.04" result="noise" /%3E%3CfeDiffuseLighting in="noise" lighting-color="white" surfaceScale="1"%3E%3CfeDistantLight azimuth="45" elevation="60" /%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width="100" height="100" filter="url(%23paper)" opacity="0.3" /%3E%3C/svg%3E');
 }
 
@@ -18,8 +18,8 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Open Sans', sans-serif;
-  background-color: #e8e4d9;
+  font-family: 'Roboto', sans-serif;
+  background-color: #dcd6c9;
   background-image: 
     radial-gradient(circle at 20% 50%, rgba(120, 119, 118, 0.15), transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(120, 119, 118, 0.1), transparent 50%);
@@ -83,7 +83,7 @@ body {
 }
 
 .cover-content h1 {
-  font-family: 'Crimson Text', serif;
+  font-family: 'Merriweather', serif;
   font-size: 3rem;
   color: var(--primary-color);
   margin: 0 0 20px 0;
@@ -236,7 +236,7 @@ body {
 
 /* Page Content */
 .page-content {
-  font-family: 'Crimson Text', serif;
+  font-family: 'Merriweather', serif;
   line-height: 1.8;
   color: var(--text-color);
   font-size: 1.1rem;
@@ -279,7 +279,7 @@ body {
   bottom: 30px;
   font-size: 0.9rem;
   color: #999;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Roboto', sans-serif;
 }
 
 .page-number.left {
