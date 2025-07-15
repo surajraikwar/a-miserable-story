@@ -3,18 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A Miserable Story - Cover</title>
+    <title>A Miserable Story</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="book-cover">
-        <a href="book.html" class="cover-link">
-            <div class="cover-content">
-                <h1>A Miserable Story</h1>
-                <p class="author">By Suraj Raikwar</p>
-                <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Book Cover" class="cover-image">
-            </div>
-        </a>
+    <div id="book-container">
+        <div id="book">
+            <div id="pages"></div>
+        </div>
+        <button id="prev-page" class="nav-btn">&lt;</button>
+        <button id="next-page" class="nav-btn">&gt;</button>
     </div>
+
+    <script id="book-data" type="application/json">
+    {
+      "title": "A Miserable Story",
+      "author": "Suraj Raikwar",
+      "chapters": [
+        { "id": 1, "title": "Chapter 1: The Departure", "file": "chapter1.json" },
+        { "id": 2, "title": "Chapter 2: Lost in the Shadows", "file": "chapter2.json" },
+        { "id": 3, "title": "Chapter 3: The Weight of Memories", "file": "chapter3.json" },
+        { "id": 4, "title": "Chapter 4: Echoes of the Past", "file": "chapter4.json" },
+        { "id": 5, "title": "Chapter 5: A Glimpse of Hope", "file": "chapter5.json" },
+        { "id": 6, "title": "Chapter 6: The Storm Within", "file": "chapter6.json" },
+        { "id": 7, "title": "Chapter 7: Broken Promises", "file": "chapter7.json" },
+        { "id": 8, "title": "Chapter 8: Solitude's Embrace", "file": "chapter8.json" },
+        { "id": 9, "title": "Chapter 9: The Final Reckoning", "file": "chapter9.json" },
+        { "id": 10, "title": "Chapter 10: Redemption's Light", "file": "chapter10.json" }
+      ]
+    }
+    </script>
+    <script id="chapter-1" type="application/json">
+    { "title": "Chapter 1: The Departure", "content": [ "The room was in a rush. Half-zipped bags, clothes scattered on the bed, zippers being tested for one last fit. Aarav and his mother were packing hurriedly — they had a train to catch. Not the usual family visit trip; this one was different. This was the first step into something new.", "His sister, brother-in-law, and their two young sons — Aayu and Ruddu — were also there. Aayu, the elder one, tried to act mature but his eyes revealed otherwise. Ruddu was too young to understand the weight of the moment, giggling with a toy in his hand.", "Aarav’s father wasn’t home. Not because he didn’t want to be there — but maybe because goodbyes weren’t easy for him.", "The bags were finally zipped. The time had come.", "Aarav touched his sister’s feet. She hugged him tight, fighting back tears. His brother-in-law brought the cab to the gate. As Aarav sat inside with his mother, the mood had shifted — goodbye hung heavy in the air.", "His mother wiped her eyes discreetly with her saree's pallu. She didn’t want Aarav to see. But he knew. He was trying to avoid eye contact too — because if he spoke now, he might not hold it together either.", "The cab moved.", "Just before reaching the railway station, Aarav’s mother asked the driver to stop. She waved to someone in the distance. His father was there, standing at the turn, looking worn and emotional. Aarav stepped out, walked up silently, and bent down to touch his feet. His father hugged him tightly — breaking down as he did.", "And this time, Aarav couldn’t hold back either.", "He whispered through the tears, “Kaam chor dena… ab ghar par raho, aur mummy ka khayal rakhna.”", "His father nodded. Aarav turned, stepped back into the cab, and the car rolled ahead — this time quieter, heavier.", "They reached the station. The driver helped unload the big suitcase. No money exchanged — his brother-in-law had already paid. Inside the station, the noise of announcements, vendors, and trains mixed with Aarav’s own quiet thoughts.", "They boarded the train.", "The journey to the next town — Gwalior — was about two hours. Aarav barely spoke. He was hungry, but too overwhelmed to eat. Instead, he wore his earphones and let music carry him through memories.", "His mother, seated beside him, finally spoke mid-journey — reminiscing about the days when he used to cry before school, about how fast time had flown. They smiled, talked briefly, and fell into a silence that wasn’t empty — it was full of everything they didn’t need to say aloud.", "As the train neared Gwalior, he thought — even if he lived the best days of his life in the future, he would still miss this.", "They arrived.", "His Mama (mother’s brother) lived nearby, and they walked to his house. His family greeted them warmly — Mama, Mami, his cousin Bhaiya and Bhabhi, and their little son. Everyone knew why they were here — Aarav had a flight to catch the next morning.", "Dinner was homely. Conversations flowed. There was laughter, catching up. Bhabhi had cooked a simple but delicious meal. Aarav was tired, but grateful.", "The next morning, his mother woke him up early. Breakfast was ready. His cousin went to get a cab. As they packed, his mother ran to the kitchen and returned with a small bowl of dahi-cheeni — a sweet curd traditionally eaten before doing something important.", "She handed it to him and said softly, “Sab accha hoga. Maa ka aashirwad tere saath hai.”", "Her eyes glistened.", "She added, “Mainne bahut mehnat ki hai… sirf tujhe yahaan tak dekhne ke liye.”", "He didn’t reply — just hugged her.", "The cab arrived. Bags were loaded. He waved goodbye to everyone, touched his mother’s feet, took her blessing, and got in.", "As the cab pulled away, he sat back and stared out at the city fading behind. He was finally flying.", "First Flight", "Gwalior Airport was small, like most tier-II city airports. Just a few gates, a couple of cafés, and barely any crowd. But to Aarav, it felt enormous. This was his first flight.", "He had Googled everything — how to check-in, what happens at security, how boarding works. But still, standing there with his boarding pass and ID, nerves kicked in.", "Security was tighter than anything he’d experienced. Bags scanned, pockets emptied, belt removed — it was like a ritual of entering another world. He followed others, mimicked their moves.", "Inside the terminal, he waited at the gate. There wasn’t much around — overpriced coffee, few passengers, and quiet announcements. The kind of quiet that made time stretch.", "Finally, boarding started. There was no glass tunnel here. Passengers walked directly on the tarmac, under the morning sun, toward the plane.", "As he stepped inside, cold air greeted him. A smiling air hostess welcomed him. He found his seat — a window seat. Perfect.", "The plane took off. The earth shrunk. Jhansi, Gwalior — everything he knew — reduced to dots. The clouds passed. The sky opened.", "About 30 minutes in, a food trolley began moving through the aisle. Aarav hadn’t pre-booked a meal and wasn’t sure how it worked. He noticed some passengers getting trays automatically while others ordered something directly.", "When the hostess reached him, he politely declined — unsure how payments worked mid-air, and a bit shy too. Later, he realized passengers were paying using credit and debit cards — no mobile network needed.", "But when he overheard the price of a coffee — ₹180 — he felt relieved about saying no.", "Midway, there was turbulence. The aircraft shook lightly, and the seatbelt signs lit up. The pilot’s calm voice reassured everyone.", "The journey lasted barely two hours — but in that short time, Aarav had crossed 1,700 kilometers. A trip that would've taken 36 hours by train.", "As the plane descended, the announcement came:", "“Welcome to Bengaluru.”", "Arrival in the Big City", "Outside the Kempegowda International Airport, Bengaluru felt like a different planet. The infrastructure, the people, the glass façades — everything screamed “metro.”", "Just outside the terminal, cab stations buzzed with activity. Aarav checked prices on his phone. The distance to his destination was 30 kilometers — but the fares were absurd. Welcome to airport surcharges.", "He was a bit hungry. He thought of grabbing a bite — but the prices at food outlets inside the airport were even worse than on the flight. ₹350 for a sandwich? He sighed and walked on.", "Instead, he looked around for public transport. Surely a city this big had buses from the airport.", "He was right.", "Just a two-minute walk from the terminal, he found a row of blue airport shuttle buses — all lined up, each with a digital screen showing a unique ID like KIA-7A, KIA-8, etc.", "Aarav checked the route number that matched the area he had to go to. His new company had arranged temporary accommodation for him nearby their office. Still unsure, he asked the bus conductor to confirm.", "His first interaction in Bengaluru.", "He spoke in English — assuming Hindi might not be common. The conductor replied politely, and Aarav stepped inside.", "The AC bus was comfortable. He plugged in his earphones. Music back on. The city passed by — new buildings, traffic, trees, flyovers, unfamiliar names on signboards.", "An hour later, he got off at his stop.", "His stomach reminded him of its needs. He spotted a nearby restaurant and ordered idli-sambar. It wasn’t his first time eating it — his mom used to make it back home. But this one tasted different. More authentic. More southern.", "He booked an auto from there — his final stretch.", "He had already called the guesthouse caretaker earlier — Arvind ji — and shared his ETA. As the auto pulled in front of a quiet residential lane, Aarav finally saw the guesthouse.", "A big building, several rooms. But right now, only him and Arvind ji.", "Arvind welcomed him with a warm smile and offered water, food, tea. Aarav thanked him but said he’d already eaten.", "It was late afternoon. The skies were turning amber. Aarav tried to rest but couldn’t sleep. The journey, the emotions, the loneliness — it all churned quietly.", "So he went for a walk.", "He explored nearby streets. Cafés with neon signs. Trendy pubs. Malls. Smoke shops. Young people in corporate clothes and sneakers. It was a different energy — electric, fast, cosmopolitan.", "He lit a cigarette — something he did occasionally back home. It calmed his nerves.", "Returning to the guesthouse, he and Arvind ji had dinner together. They connected easily — both from North India, both far from home. They spoke about politics, states, life in the South, and the strangeness of being outsiders.", "Later that night, Aarav called his mother. She had returned to Jhansi from Mama’s house. They spoke for a few minutes. She was relieved. So was he.", "He lay in bed after the call. The room was quiet. There were two days left before work began — a weekend to find a flat, get his bearings, and ease into this new chapter.", "He closed his eyes.", "The city hummed outside.", "His new life had just begun." ] }
+    </script>
+    <script id="chapter-2" type="application/json">
+    { "title": "Chapter 2: Lost in the Shadows", "content": ["Content for chapter 2..."] }
+    </script>
+    <script id="chapter-3" type="application/json">
+    { "title": "Chapter 3: The Weight of Memories", "content": ["Content for chapter 3..."] }
+    </script>
+    <script id="chapter-4" type="application/json">
+    { "title": "Chapter 4: Echoes of the Past", "content": ["Content for chapter 4..."] }
+    </script>
+    <script id="chapter-5" type="application/json">
+    { "title": "Chapter 5: A Glimpse of Hope", "content": ["Content for chapter 5..."] }
+    </script>
+    <script id="chapter-6" type="application/json">
+    { "title": "Chapter 6: The Storm Within", "content": ["Content for chapter 6..."] }
+    </script>
+    <script id="chapter-7" type="application/json">
+    { "title": "Chapter 7: Broken Promises", "content": ["Content for chapter 7..."] }
+    </script>
+    <script id="chapter-8" type="application/json">
+    { "title": "Chapter 8: Solitude's Embrace", "content": ["Content for chapter 8..."] }
+    </script>
+    <script id="chapter-9" type="application/json">
+    { "title": "Chapter 9: The Final Reckoning", "content": ["Content for chapter 9..."] }
+    </script>
+    <script id="chapter-10" type="application/json">
+    { "title": "Chapter 10: Redemption's Light", "content": ["Content for chapter 10..."] }
+    </script>
+    <script src="flipbook.js"></script>
 </body>
 </html>
