@@ -270,44 +270,21 @@ class DigitalFlipbook {
     const book = document.querySelector('.book');
     
     if (this.isMobile) {
-      // Smooth swipe animation for mobile
+      // 3D page flip for mobile
       const page = this.leftPage;
-      const pageContent = page.querySelector('.page-content');
+      page.classList.add('flipping');
       
-      // Store current content
-      const currentContent = pageContent.innerHTML;
-      
-      // Add swipe out animation
       if (direction === 'next') {
-        page.style.transform = 'translateX(-110%) scale(0.95)';
-        page.style.opacity = '0';
+        page.style.transform = 'rotateY(-180deg)';
       } else {
-        page.style.transform = 'translateX(110%) scale(0.95)';
-        page.style.opacity = '0';
+        page.style.transform = 'rotateY(0deg)';
       }
       
-      // After swipe out, update content and swipe in
       setTimeout(() => {
-        // Update page content
         callback();
-        
-        // Reset and prepare for slide in
-        page.style.transition = 'none';
-        if (direction === 'next') {
-          page.style.transform = 'translateX(100%)';
-        } else {
-          page.style.transform = 'translateX(-100%)';
-        }
-        page.style.opacity = '0';
-        
-        // Force reflow
-        page.offsetHeight;
-        
-        // Slide in new page
-        page.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-        page.style.transform = 'translateX(0)';
-        page.style.opacity = '1';
-      }, 300);
+        page.classList.remove('flipping');
+        page.style.transform = '';
+      }, 600);
     } else {
       // 3D page flip for desktop
       if (direction === 'next') {
