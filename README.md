@@ -44,17 +44,22 @@ A beautiful, interactive digital book experience for the web with realistic page
 
 ### Adding Your Content
 
-Edit the `generateBookContent()` function in `flipbook.js`:
+Content is now loaded dynamically from JSON files in the `content` folder:
 
-```javascript
-const chapters = [
-  {
-    title: "Your Chapter Title",
-    content: `Your chapter content here...`
-  },
-  // Add more chapters
-];
+1. **Edit book metadata**: Update `content/book-metadata.json` with your book details
+2. **Add chapters**: Create JSON files for each chapter (e.g., `content/chapter1.json`)
+3. **Chapter format**:
+```json
+{
+  "title": "Chapter Title",
+  "content": [
+    "First paragraph...",
+    "Second paragraph..."
+  ]
+}
 ```
+
+See `content/README.md` for detailed instructions.
 
 ### Styling
 

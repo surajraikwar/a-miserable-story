@@ -1,0 +1,59 @@
+{
+  "title": "A Miserable Story",
+  "author": "Suraj Raikwar",
+  "chapters": [
+    {
+      "id": 1,
+      "title": "Chapter 1: The Departure",
+      "file": "chapter1.json"
+    },
+    {
+      "id": 2,
+      "title": "Chapter 2: Lost in the Shadows",
+      "file": "chapter2.json"
+    },
+    {
+      "id": 3,
+      "title": "Chapter 3: The Weight of Memories",
+      "file": "chapter3.json"
+    },
+    {
+      "id": 4,
+      "title": "Chapter 4: Echoes of the Past",
+      "file": "chapter4.json"
+    },
+    {
+      "id": 5,
+      "title": "Chapter 5: A Glimpse of Hope",
+      "file": "chapter5.json"
+    },
+    {
+      "id": 6,
+      "title": "Chapter 6: The Storm Within",
+      "file": "chapter6.json"
+    },
+    {
+      "id": 7,
+      "title": "Chapter 7: Broken Promises",
+      "file": "chapter7.json"
+    },
+    {
+      "id": 8,
+      "title": "Chapter 8: Solitude's Embrace",
+      "file": "chapter8.json"
+    },
+    {
+      "id": 9,
+      "title": "Chapter 9: The Final Reckoning",
+      "file": "chapter9.json"
+    },
+    {
+      "id": 10,
+      "title": "Chapter 10: Redemption's Light",
+      "file": "chapter10.json"
+    }
+  ],
+  "coverImage": "cover.jpg",
+  "pageSize": "A5",
+  "language": "en"
+}

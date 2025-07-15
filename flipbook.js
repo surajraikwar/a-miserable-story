@@ -1,9 +1,9 @@
-// Flipbook JavaScript
+// Digital Flipbook with Dynamic Content Loading
 class DigitalFlipbook {
   constructor() {
     // State
     this.currentPage = 1;
-    this.totalPages = 10;
+    this.totalPages = 0;
     this.isAnimating = false;
     this.isMobile = window.innerWidth <= 768;
     
@@ -21,119 +21,138 @@ class DigitalFlipbook {
     this.openBookBtn = document.querySelector('.open-book-btn');
     
     // Book content
-    this.pages = this.generateBookContent();
+    this.bookMetadata = null;
+    this.chapters = [];
+    this.pages = [];
+    this.loadedChapters = new Map();
     
     // Initialize
     this.init();
   }
   
-  init() {
-    // Set total pages
+  async init() {
+    try {
+      // Load book metadata first
+      await this.loadBookMetadata();
+      
+      // Event listeners
+      this.openBookBtn.addEventListener('click', () => this.openBook());
+      this.prevBtn.addEventListener('click', () => this.turnPage('prev'));
+      this.nextBtn.addEventListener('click', () => this.turnPage('next'));
+      
+      // Touch events for mobile
+      this.setupTouchEvents();
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+      
+      // Window resize handler
+      window.addEventListener('resize', () => this.handleResize());
+      
+    } catch (error) {
+      console.error('Failed to initialize book:', error);
+      this.showError('Failed to load book content. Please refresh the page.');
+    }
+  }
+  
+  async loadBookMetadata() {
+    try {
+      const response = await fetch('content/book-metadata.json');
+      if (!response.ok) throw new Error('Failed to load metadata');
+      
+      this.bookMetadata = await response.json();
+      this.chapters = this.bookMetadata.chapters;
+      
+      // Set book title and author dynamically
+      const coverTitle = this.bookCover.querySelector('h1');
+      const coverAuthor = this.bookCover.querySelector('.author');
+      if (coverTitle) coverTitle.textContent = this.bookMetadata.title;
+      if (coverAuthor) coverAuthor.textContent = `By ${this.bookMetadata.author}`;
+      
+      // Calculate total pages (each chapter is spread across multiple pages)
+      this.totalPages = this.chapters.length;
+      
+      // Update page counters
+      this.totalPagesSpan.textContent = this.totalPages;
+      if (this.mobileTotalPagesSpan) {
+        this.mobileTotalPagesSpan.textContent = this.totalPages;
+      }
+      
+    } catch (error) {
+      console.error('Failed to load book metadata:', error);
+      // Fallback to demo content
+      this.setupDemoContent();
+    }
+  }
+  
+  async loadChapter(chapterId) {
+    try {
+      if (this.loadedChapters.has(chapterId)) {
+        return this.loadedChapters.get(chapterId);
+      }
+      
+      const chapter = this.chapters.find(ch => ch.id === chapterId);
+      if (!chapter) throw new Error(`Chapter ${chapterId} not found`);
+      
+      const response = await fetch(`content/${chapter.file}`);
+      if (!response.ok) throw new Error(`Failed to load ${chapter.file}`);
+      
+      const chapterData = await response.json();
+      
+      // Process chapter content into formatted HTML
+      const formattedContent = this.formatChapterContent(chapterData);
+      
+      this.loadedChapters.set(chapterId, formattedContent);
+      this.pages[chapterId - 1] = formattedContent;
+      
+      return formattedContent;
+      
+    } catch (error) {
+      console.error(`Failed to load chapter ${chapterId}:`, error);
+      // Return placeholder content
+      return {
+        title: `Chapter ${chapterId}`,
+        content: `<h2>Chapter ${chapterId}</h2><p>Content could not be loaded.</p>`
+      };
+    }
+  }
+  
+  formatChapterContent(chapterData) {
+    const title = `<h2>${chapterData.title}</h2>`;
+    const content = chapterData.content
+      .map(paragraph => `<p>${paragraph}</p>`)
+      .join('');
+    
+    return {
+      title: chapterData.title,
+      content: title + content,
+      raw: chapterData.content
+    };
+  }
+  
+  setupDemoContent() {
+    // Fallback demo content if JSON files can't be loaded
+    this.chapters = [
+      { id: 1, title: "Chapter 1: Demo", file: "chapter1.json" }
+    ];
+    this.totalPages = 1;
     this.totalPagesSpan.textContent = this.totalPages;
     if (this.mobileTotalPagesSpan) {
       this.mobileTotalPagesSpan.textContent = this.totalPages;
     }
     
-    // Event listeners
-    this.openBookBtn.addEventListener('click', () => this.openBook());
-    this.prevBtn.addEventListener('click', () => this.turnPage('prev'));
-    this.nextBtn.addEventListener('click', () => this.turnPage('next'));
-    
-    // Touch events for mobile
-    this.setupTouchEvents();
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => this.handleKeyboard(e));
-    
-    // Window resize handler
-    window.addEventListener('resize', () => this.handleResize());
-    
-    // Load initial pages
-    this.loadPages();
+    this.pages = [{
+      title: "Demo Chapter",
+      content: "<h2>Demo Chapter</h2><p>This is demo content. Please ensure the content files are properly loaded.</p>"
+    }];
   }
   
-  generateBookContent() {
-    // Sample book content - replace with your actual content
-    const chapters = [
-      {
-        title: "Chapter 1: The Beginning",
-        content: `In the realm of digital storytelling, where pixels dance and code weaves narratives, our journey begins. This is not just a book, but an experience that bridges the tactile pleasure of traditional reading with the infinite possibilities of the digital world.
-
-        The art of creating digital books has evolved significantly over the years. What started as simple PDFs has transformed into interactive experiences that engage readers in ways previously unimaginable.`
-      },
-      {
-        title: "Chapter 2: The Digital Revolution",
-        content: `The transition from physical to digital books marked a pivotal moment in human history. Libraries that once required vast buildings could now fit in the palm of your hand. The democratization of knowledge had truly begun.
-
-        Yet, something was lost in this transition—the sensory experience of turning pages, the weight of knowledge in your hands, the smell of paper and ink. Digital flipbooks aim to restore some of that magic.`
-      },
-      {
-        title: "Chapter 3: Interactive Elements",
-        content: `Modern digital books can include videos, animations, and interactive diagrams. Readers can highlight text, make notes, and share passages with friends instantly. The book has become a living document.
-
-        <img src="https://via.placeholder.com/400x300/667eea/ffffff?text=Interactive+Diagram" alt="Interactive diagram example" />
-        
-        These capabilities open new avenues for education and entertainment alike.`
-      },
-      {
-        title: "Chapter 4: The Reading Experience",
-        content: `User experience design plays a crucial role in digital book creation. The interface must be intuitive, the typography readable, and the navigation seamless. Every element should enhance, not distract from, the reading experience.
-
-        Consider factors like font size, line spacing, and color contrast. These seemingly minor details can make the difference between a book that's a joy to read and one that causes eye strain.`
-      },
-      {
-        title: "Chapter 5: Responsive Design",
-        content: `A digital book must adapt to various screen sizes and orientations. What looks perfect on a desktop might be unreadable on a phone. Responsive design ensures that your content is accessible to all readers, regardless of their device.
-
-        This flexibility is one of the greatest advantages of digital books. A single publication can serve readers on smartphones, tablets, e-readers, and desktop computers.`
-      },
-      {
-        title: "Chapter 6: Animation and Effects",
-        content: `Subtle animations can enhance the reading experience without being distracting. Page turns should feel natural, transitions smooth. The goal is to create an interface that feels as intuitive as a physical book while leveraging the unique capabilities of digital media.
-
-        Effects should serve the content, not overshadow it. A well-placed animation can guide the reader's attention or provide visual feedback that enhances understanding.`
-      },
-      {
-        title: "Chapter 7: Accessibility",
-        content: `Digital books have the potential to be more accessible than their physical counterparts. Text can be resized, colors adjusted for better contrast, and screen readers can voice the content for visually impaired users.
-
-        Implementing proper accessibility features isn't just good practice—it's essential for creating truly inclusive digital experiences.`
-      },
-      {
-        title: "Chapter 8: Performance",
-        content: `Loading times and smooth animations are crucial for user satisfaction. Optimize images, lazy-load content, and minimize JavaScript execution to ensure your digital book performs well even on older devices.
-
-        Remember that not all readers have high-speed internet or powerful devices. Performance optimization ensures your book reaches the widest possible audience.`
-      },
-      {
-        title: "Chapter 9: The Future",
-        content: `As technology advances, so too will the possibilities for digital books. Virtual reality, augmented reality, and artificial intelligence all promise to revolutionize how we create and consume written content.
-
-        Imagine books that adapt their narrative based on reader preferences, or educational texts that provide personalized learning experiences. The future of digital publishing is limited only by our imagination.`
-      },
-      {
-        title: "Chapter 10: Conclusion",
-        content: `Our journey through the digital flipbook comes to an end, but this is just the beginning of your own adventure. Whether you're a reader enjoying this new format or a creator inspired to build your own digital books, the possibilities are endless.
-
-        Thank you for joining us on this exploration of what books can be in the digital age. May your own stories, whether read or written, be filled with wonder and discovery.
-
-        <em>The End</em>`
-      }
-    ];
+  async openBook() {
+    // Load first chapter before opening
+    if (this.pages.length === 0 && this.chapters.length > 0) {
+      await this.loadChapter(1);
+    }
     
-    // Convert chapters to pages format
-    const pages = [];
-    chapters.forEach((chapter, index) => {
-      pages.push({
-        number: index + 1,
-        content: `<h2>${chapter.title}</h2>${chapter.content.split('\n\n').map(p => `<p>${p.trim()}</p>`).join('')}`
-      });
-    });
-    
-    return pages;
-  }
-  
-  openBook() {
     // Animate book opening
     this.bookCover.style.transform = 'rotateY(-180deg)';
     this.bookCover.style.opacity = '0';
@@ -142,6 +161,9 @@ class DigitalFlipbook {
       this.bookCover.classList.add('hidden');
       this.bookContainer.classList.remove('hidden');
       this.bookContainer.style.display = 'block';
+      
+      // Load initial pages
+      this.loadPages();
       
       // Show swipe hint on mobile
       if (this.isMobile) {
@@ -153,12 +175,16 @@ class DigitalFlipbook {
     }, 600);
   }
   
-  loadPages() {
+  async loadPages() {
+    // Ensure current chapter is loaded
+    const currentChapter = Math.min(this.currentPage, this.chapters.length);
+    if (!this.pages[currentChapter - 1]) {
+      await this.loadChapter(currentChapter);
+    }
+    
     if (this.isMobile) {
-      // Mobile: show one page at a time
       this.loadSinglePage();
     } else {
-      // Desktop: show two pages
       this.loadSpread();
     }
     
@@ -166,45 +192,41 @@ class DigitalFlipbook {
   }
   
   loadSinglePage() {
-    const page = this.pages[this.currentPage - 1];
-    if (page) {
-      this.leftPage.querySelector('.page-content').innerHTML = page.content;
-      this.leftPage.querySelector('.page-number').textContent = page.number;
+    const pageData = this.pages[this.currentPage - 1];
+    if (pageData) {
+      this.leftPage.querySelector('.page-content').innerHTML = pageData.content;
+      this.leftPage.querySelector('.page-number').textContent = this.currentPage;
     }
     this.rightPage.style.display = 'none';
   }
   
-  loadSpread() {
-    // Calculate left and right page numbers for spread view
-    let leftPageNum, rightPageNum;
-    
-    if (this.currentPage === 1) {
-      leftPageNum = 1;
-      rightPageNum = 2;
-    } else if (this.currentPage % 2 === 0) {
-      leftPageNum = this.currentPage;
-      rightPageNum = this.currentPage + 1;
-    } else {
-      leftPageNum = this.currentPage - 1;
-      rightPageNum = this.currentPage;
-    }
+  async loadSpread() {
+    // For desktop, show current chapter on left, next chapter on right
+    let leftPageNum = this.currentPage;
+    let rightPageNum = Math.min(this.currentPage + 1, this.totalPages);
     
     // Load left page
+    if (!this.pages[leftPageNum - 1]) {
+      await this.loadChapter(leftPageNum);
+    }
     const leftPageData = this.pages[leftPageNum - 1];
     if (leftPageData) {
       this.leftPage.querySelector('.page-content').innerHTML = leftPageData.content;
-      this.leftPage.querySelector('.page-number').textContent = leftPageData.number;
+      this.leftPage.querySelector('.page-number').textContent = leftPageNum;
       this.leftPage.style.display = 'block';
-    } else {
-      this.leftPage.style.display = 'none';
     }
     
     // Load right page
-    const rightPageData = this.pages[rightPageNum - 1];
-    if (rightPageData && rightPageNum <= this.totalPages) {
-      this.rightPage.querySelector('.page-content').innerHTML = rightPageData.content;
-      this.rightPage.querySelector('.page-number').textContent = rightPageData.number;
-      this.rightPage.style.display = 'block';
+    if (rightPageNum <= this.totalPages) {
+      if (!this.pages[rightPageNum - 1]) {
+        await this.loadChapter(rightPageNum);
+      }
+      const rightPageData = this.pages[rightPageNum - 1];
+      if (rightPageData) {
+        this.rightPage.querySelector('.page-content').innerHTML = rightPageData.content;
+        this.rightPage.querySelector('.page-number').textContent = rightPageNum;
+        this.rightPage.style.display = 'block';
+      }
     } else {
       this.rightPage.style.display = 'none';
     }
@@ -422,6 +444,11 @@ class DigitalFlipbook {
       // Reload pages with new layout
       this.loadPages();
     }
+  }
+  
+  showError(message) {
+    console.error(message);
+    // You can implement a user-friendly error display here
   }
 }
 
