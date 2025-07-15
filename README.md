@@ -89,6 +89,33 @@ To add a custom book cover image:
 </div>
 ```
 
+## Deployment
+
+### GitHub Pages
+
+To deploy this project to GitHub Pages:
+
+1. Initialize a git repository:
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+```
+
+2. Link to your GitHub repository:
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+git branch -M main
+git push -u origin main
+```
+
+3. Deploy to GitHub Pages:
+```bash
+npm run deploy
+```
+
+Your website will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPOSITORY/`
+
 ## Advanced Features
 
 ### Adding Images
