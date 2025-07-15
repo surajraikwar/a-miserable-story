@@ -3,72 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Flipbook - Interactive Book Experience</title>
+    <title>A Miserable Story - Cover</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Book Cover -->
-    <div id="book-cover" class="book-cover">
-        <div class="cover-content">
-            <h1>A Miserable Story</h1>
-            <p class="author">By Suraj Raikwar</p>
-            <div class="cover-decoration"></div>
-            <button class="open-book-btn">Open Book</button>
-        </div>
-    </div>
-
-    <!-- Book Container -->
-    <div id="book-container" class="book-container hidden">
-        <!-- Mobile Page Indicator -->
-        <div class="mobile-page-indicator">
-            Page <span id="mobile-current-page">1</span> of <span id="mobile-total-pages">10</span>
-        </div>
-        
-        <!-- Navigation Controls -->
-        <div class="navigation">
-            <button class="nav-btn prev-btn" aria-label="Previous page">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-                </svg>
-            </button>
-            <span class="page-indicator">Page <span id="current-page">1</span> of <span id="total-pages">10</span></span>
-            <button class="nav-btn next-btn" aria-label="Next page">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Book Pages -->
-        <div class="book-wrapper">
-            <div class="book">
-                <!-- Left Page -->
-                <div class="page left-page" id="left-page">
-                    <div class="page-content">
-                        <!-- Content will be dynamically loaded -->
-                    </div>
-                    <div class="page-number left"></div>
-                </div>
-
-                <!-- Right Page -->
-                <div class="page right-page" id="right-page">
-                    <div class="page-content">
-                        <!-- Content will be dynamically loaded -->
-                    </div>
-                    <div class="page-number right"></div>
-                </div>
-
-                <!-- Page flip animation overlay -->
-                <div class="page-flip-overlay hidden"></div>
+    <div class="book-cover">
+        <a href="book.html" class="cover-link">
+            <div class="cover-content">
+                <h1>A Miserable Story</h1>
+                <p class="author">By Suraj Raikwar</p>
+                <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Book Cover" class="cover-image">
             </div>
-        </div>
-
-        <!-- Mobile swipe indicator -->
-        <div class="swipe-hint mobile-only">
-            <span>Swipe to turn pages</span>
-        </div>
+        </a>
     </div>
-
-    <script src="flipbook.js"></script>
 </body>
 </html>

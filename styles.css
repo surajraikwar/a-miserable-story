@@ -78,6 +78,15 @@ body {
   transition: transform 0.3s ease;
 }
 
+.cover-image {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin-top: 20px;
+  border-radius: 5px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
 .cover-content:hover {
   transform: perspective(1000px) rotateX(0deg) scale(1.02);
 }
