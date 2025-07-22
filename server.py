@@ -31,22 +31,29 @@ def application(environ, start_response):
         path = 'index.html'
     
     # Get the absolute path to the content directory
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content'))
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    
+    # Handle /content/ prefix in the path
+    if path.startswith('content/'):
+        path = path[8:]  # Remove 'content/' prefix
     
     # Construct full path to the requested file
-    full_path = os.path.abspath(os.path.join(base_dir, path))
+    full_path = os.path.abspath(os.path.join(base_dir, 'content', path))
     
     # Security check: prevent directory traversal
     try:
         # Normalize paths for comparison
         full_path = os.path.normpath(full_path)
-        base_dir = os.path.normpath(base_dir)
+        content_dir = os.path.normpath(os.path.join(base_dir, 'content'))
         
-        # Ensure the file is within the base directory
-        if not os.path.commonpath([full_path, base_dir]) == base_dir:
+        # Ensure the file is within the content directory
+        common_path = os.path.commonpath([full_path, content_dir])
+        if common_path != content_dir:
+            print(f'Security check failed: {full_path} is not in {content_dir}')
             start_response('403 Forbidden', [('Content-Type', 'text/plain')])
             return [b'403 Forbidden: Access denied']
-    except ValueError:
+    except ValueError as e:
+        print(f'Path validation error: {e}')
         start_response('403 Forbidden', [('Content-Type', 'text/plain')])
         return [b'403 Forbidden: Invalid path']
     

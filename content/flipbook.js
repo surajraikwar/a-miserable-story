@@ -54,34 +54,64 @@ class EnhancedDigitalFlipbook {
   }
   
   async init() {
+    console.log('Initializing flipbook...');
     try {
       // Show loading screen
       this.showLoading();
       
-      // Load book metadata and process content
-      await this.loadBookMetadata();
-      await this.processAllChapters();
+      try {
+        console.log('Loading book metadata...');
+        await this.loadBookMetadata();
+        console.log('Book metadata loaded successfully');
+        
+        if (!this.bookMetadata || !this.chapters || this.chapters.length === 0) {
+          throw new Error('No book metadata or chapters found');
+        }
+        
+        console.log('Processing chapters...');
+        await this.processAllChapters();
+        console.log('Chapters processed successfully');
+        
+      } catch (error) {
+        console.error('Error loading book content:', error);
+        // Try to fall back to demo content
+        console.log('Attempting to load demo content...');
+        this.setupDemoContent();
+      }
       
-      // Hide loading screen
-      this.hideLoading();
-      
-      // Setup event listeners
-      this.setupEventListeners();
-      
-      // Setup touch events for mobile
-      this.setupTouchEvents();
-      
-      // Setup keyboard navigation
-      this.setupKeyboardEvents();
-      
-      // Setup resize handler
-      this.setupResizeHandler();
+      // Setup UI components
+      try {
+        console.log('Setting up UI components...');
+        this.setupEventListeners();
+        this.setupTouchEvents();
+        this.setupKeyboardEvents();
+        this.setupResizeHandler();
+        console.log('UI components set up successfully');
+      } catch (error) {
+        console.error('Error setting up UI components:', error);
+        throw new Error('Failed to initialize user interface');
+      }
       
       console.log('Enhanced Digital Flipbook initialized successfully');
       
     } catch (error) {
-      console.error('Failed to initialize book:', error);
-      this.showError('Failed to load book content. Please refresh the page.');
+      console.error('Critical error during initialization:', error);
+      this.showError(`Failed to initialize book: ${error.message}. Please refresh the page.`);
+      
+      // As a last resort, try to show demo content
+      try {
+        this.setupDemoContent();
+      } catch (e) {
+        console.error('Failed to load demo content:', e);
+      }
+    } finally {
+      // Always hide loading screen
+      this.hideLoading();
+      
+      // Ensure the book container is visible if we have content
+      if (this.pages && this.pages.length > 0) {
+        this.bookContainer.classList.remove('hidden');
+      }
     }
   }
   
@@ -111,14 +141,44 @@ class EnhancedDigitalFlipbook {
   
   async loadBookMetadata() {
     try {
-      const response = await fetch('content/book-metadata.json');
-      if (!response.ok) throw new Error('Failed to load metadata');
+      // Try multiple possible paths for the metadata file
+      const possiblePaths = [
+        'book-metadata.json',
+        '/book-metadata.json',
+        'content/book-metadata.json',
+        '/content/book-metadata.json',
+        './book-metadata.json',
+        './content/book-metadata.json'
+      ];
       
-      this.bookMetadata = await response.json();
-      this.chapters = this.bookMetadata.chapters;
+      let lastError;
+      for (const path of possiblePaths) {
+        try {
+          console.log(`Trying to load metadata from: ${path}`);
+          const response = await fetch(path);
+          if (response.ok) {
+            this.bookMetadata = await response.json();
+            this.chapters = this.bookMetadata.chapters || [];
+            console.log('Successfully loaded metadata:', this.bookMetadata);
+            
+            // If no chapters found, throw an error
+            if (this.chapters.length === 0) {
+              throw new Error('No chapters found in metadata');
+            }
+            
+            // Update cover with metadata
+            this.updateCover();
+            return; // Success, exit the function
+          }
+        } catch (e) {
+          lastError = e;
+          console.warn(`Failed to load metadata from ${path}:`, e.message);
+          continue;
+        }
+      }
       
-      // Update cover with metadata
-      this.updateCover();
+      // If we get here, all paths failed
+      throw lastError || new Error('Failed to load metadata from any location');
       
     } catch (error) {
       console.error('Failed to load book metadata:', error);
@@ -137,54 +197,135 @@ class EnhancedDigitalFlipbook {
   }
   
   async processAllChapters() {
+    console.log('Starting to process all chapters...');
     this.pages = [];
     this.pageMap.clear();
     let pageNumber = 1;
     
+    if (!this.chapters || this.chapters.length === 0) {
+      console.error('No chapters found to process');
+      this.setupDemoContent();
+      return;
+    }
+    
+    console.log(`Found ${this.chapters.length} chapters in metadata`);
+    
     for (const chapter of this.chapters) {
-      const chapterData = await this.loadChapter(chapter.id);
-      const chapterPages = this.paginateChapter(chapterData, chapter.id);
+      console.log(`Processing chapter ${chapter.id}: ${chapter.title}`);
       
-      // Map each page to its chapter
-      for (const page of chapterPages) {
-        this.pageMap.set(pageNumber, {
-          chapterId: chapter.id,
-          chapterTitle: chapter.title,
-          pageData: page
-        });
-        pageNumber++;
+      try {
+        const chapterData = await this.loadChapter(chapter.id);
+        console.log(`Loaded chapter ${chapter.id} with ${chapterData.content ? chapterData.content.length : 0} content items`);
+        
+        const chapterPages = this.paginateChapter(chapterData, chapter.id);
+        console.log(`Paginated into ${chapterPages.length} pages`);
+        
+        // Map each page to its chapter
+        for (const page of chapterPages) {
+          this.pageMap.set(pageNumber, {
+            chapterId: chapter.id,
+            chapterTitle: chapter.title,
+            pageData: page
+          });
+          pageNumber++;
+        }
+        
+        this.pages.push(...chapterPages);
+      } catch (error) {
+        console.error(`Error processing chapter ${chapter.id}:`, error);
+        // Skip to next chapter on error
+        continue;
       }
-      
-      this.pages.push(...chapterPages);
     }
     
     this.totalPages = this.pages.length;
+    console.log(`Total pages processed: ${this.totalPages}`);
+    
+    if (this.totalPages === 0) {
+      console.warn('No pages were processed. Falling back to demo content.');
+      this.setupDemoContent();
+      return;
+    }
+    
     this.updatePageCounters();
+    this.updateProgress();
     this.generateTableOfContents();
+    this.jumpToPage(1); // Start with the first page
   }
   
   async loadChapter(chapterId) {
     try {
+      // Check if chapter is already loaded
       if (this.loadedChapters.has(chapterId)) {
         return this.loadedChapters.get(chapterId);
       }
       
+      // Find the chapter in the metadata
       const chapter = this.chapters.find(ch => ch.id === chapterId);
-      if (!chapter) throw new Error(`Chapter ${chapterId} not found`);
+      if (!chapter) throw new Error(`Chapter ${chapterId} not found in metadata`);
       
-      const response = await fetch(`content/${chapter.file}`);
-      if (!response.ok) throw new Error(`Failed to load ${chapter.file}`);
+      console.log(`Loading chapter ${chapterId}: ${chapter.title}`);
       
-      const chapterData = await response.json();
-      this.loadedChapters.set(chapterId, chapterData);
+      // Try multiple possible paths for the chapter file
+      const possiblePaths = [
+        // Try direct path first (as specified in metadata)
+        chapter.file,
+        
+        // Try with various path combinations
+        `content/${chapter.file}`,
+        `/${chapter.file}`,
+        `/content/${chapter.file}`,
+        `./${chapter.file}`,
+        `./content/${chapter.file}`,
+        
+        // Try with just the filename (in case path is included in the filename)
+        chapter.file.split('/').pop(),
+        `content/${chapter.file.split('/').pop()}`,
+        
+        // Try with chapter{id}.json pattern
+        `chapter${chapterId}.json`,
+        `content/chapter${chapterId}.json`,
+        `/chapter${chapterId}.json`,
+        `/content/chapter${chapterId}.json`
+      ];
       
-      return chapterData;
+      // Remove duplicate paths
+      const uniquePaths = [...new Set(possiblePaths)];
+      
+      let lastError;
+      for (const path of uniquePaths) {
+        try {
+          console.log(`Trying to load chapter from: ${path}`);
+          const response = await fetch(path);
+          if (response.ok) {
+            const chapterData = await response.json();
+            console.log(`Successfully loaded chapter ${chapterId} from ${path}`);
+            this.loadedChapters.set(chapterId, chapterData);
+            return chapterData;
+          } else {
+            console.warn(`Request to ${path} failed with status: ${response.status}`);
+          }
+        } catch (e) {
+          lastError = e;
+          console.warn(`Failed to load from ${path}:`, e.message);
+          continue;
+        }
+      }
+      
+      // If we get here, all paths failed
+      const errorMessage = lastError ? lastError.message : 'Unknown error';
+      console.error(`Failed to load chapter ${chapterId} from any location`);
+      throw new Error(`Failed to load chapter ${chapterId}: ${errorMessage}`);
       
     } catch (error) {
-      console.error(`Failed to load chapter ${chapterId}:`, error);
+      console.error(`Error loading chapter ${chapterId}:`, error);
       return {
         title: `Chapter ${chapterId}`,
-        content: [`Content could not be loaded for Chapter ${chapterId}.`]
+        content: [
+          `Content could not be loaded for Chapter ${chapterId}.`,
+          `Error: ${error.message}`,
+          'Please check the browser console for more details.'
+        ]
       };
     }
   }
