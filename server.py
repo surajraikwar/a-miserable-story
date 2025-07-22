@@ -5,44 +5,71 @@ import http.server
 import socketserver
 import os
 import mimetypes
+from wsgiref.simple_server import make_server
+from wsgiref.util import setup_testing_defaults
+from wsgiref.simple_server import WSGIRequestHandler, WSGIServer
+from wsgiref import util
+import posixpath
+import urllib.parse
 
-PORT = 3000
+PORT = int(os.environ.get('PORT', 3000))
 
-class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def __init__(self, *args, **kwargs):
-        # Set the directory to serve files from
-        super().__init__(*args, directory="/app", **kwargs)
+class WSGIRequestHandler(WSGIRequestHandler):
+    def address_string(self):
+        # Disable reverse DNS lookups
+        return self.client_address[0]
+
+def application(environ, start_response):
+    # Set up base environment
+    setup_testing_defaults(environ)
     
-    def end_headers(self):
-        # Add CORS headers
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        super().end_headers()
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.end_headers()
-
-def main():
-    # Change to the app directory
-    os.chdir('/app')
+    # Get the path from the URL
+    path = environ.get('PATH_INFO', '').lstrip('/')
+    if not path:
+        path = 'index.html'
     
-    # Configure MIME types
-    mimetypes.add_type('application/javascript', '.js')
-    mimetypes.add_type('text/css', '.css')
-    mimetypes.add_type('application/json', '.json')
+    # Get the absolute path to the file
+    base_dir = os.path.join(os.path.dirname(__file__), 'content')
+    full_path = os.path.abspath(os.path.join(base_dir, path))
     
-    # Create server
-    with socketserver.TCPServer(("0.0.0.0", PORT), CustomHTTPRequestHandler) as httpd:
-        print(f"Serving digital book at http://0.0.0.0:{PORT}")
-        print(f"Directory: {os.getcwd()}")
+    # Security check: prevent directory traversal
+    if not full_path.startswith(os.path.abspath(base_dir)):
+        start_response('403 Forbidden', [('Content-Type', 'text/plain')])
+        return [b'403 Forbidden']
+    
+    # Check if file exists
+    if not os.path.isfile(full_path):
+        start_response('404 Not Found', [('Content-Type', 'text/plain')])
+        return [b'404 Not Found']
+    
+    # Determine MIME type
+    mime_type, _ = mimetypes.guess_type(full_path)
+    if mime_type is None:
+        mime_type = 'application/octet-stream'
+    
+    # Read and return the file
+    try:
+        with open(full_path, 'rb') as f:
+            file_data = f.read()
         
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\nServer stopped.")
+        headers = [
+            ('Content-Type', mime_type),
+            ('Access-Control-Allow-Origin', '*'),
+            ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+            ('Access-Control-Allow-Headers', 'Content-Type'),
+        ]
+        
+        start_response('200 OK', headers)
+        return [file_data]
+    except Exception as e:
+        start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
+        return [str(e).encode()]
+
+# For Gunicorn
+app = application
 
 if __name__ == "__main__":
-    main()
-    
+    # For local development
+    with make_server('', PORT, app, handler_class=WSGIRequestHandler) as httpd:
+        print(f"Serving on port {PORT}...")
+        httpd.serve_forever()
