@@ -25,17 +25,30 @@ def application(environ, start_response):
     
     # Get the path from the URL
     path = environ.get('PATH_INFO', '').lstrip('/')
+    
+    # Map root to index.html
     if not path:
         path = 'index.html'
     
-    # Get the absolute path to the file
-    base_dir = os.path.join(os.path.dirname(__file__), 'content')
+    # Get the absolute path to the content directory
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content'))
+    
+    # Construct full path to the requested file
     full_path = os.path.abspath(os.path.join(base_dir, path))
     
     # Security check: prevent directory traversal
-    if not full_path.startswith(os.path.abspath(base_dir)):
+    try:
+        # Normalize paths for comparison
+        full_path = os.path.normpath(full_path)
+        base_dir = os.path.normpath(base_dir)
+        
+        # Ensure the file is within the base directory
+        if not os.path.commonpath([full_path, base_dir]) == base_dir:
+            start_response('403 Forbidden', [('Content-Type', 'text/plain')])
+            return [b'403 Forbidden: Access denied']
+    except ValueError:
         start_response('403 Forbidden', [('Content-Type', 'text/plain')])
-        return [b'403 Forbidden']
+        return [b'403 Forbidden: Invalid path']
     
     # Check if file exists
     if not os.path.isfile(full_path):
