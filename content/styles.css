@@ -613,7 +613,7 @@ body {
   color: var(--accent-color);
 }
 
-.page-content p:first-of-type::first-letter {
+.page-content.initial-dropcap p:first-of-type::first-letter {
   font-size: 4rem;
   float: left;
   line-height: 1;

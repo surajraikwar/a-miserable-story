@@ -746,6 +746,11 @@ class EnhancedDigitalFlipbook {
     if (pageData) {
       this.leftContent.innerHTML = pageData.pageData.content;
       this.leftPageNumber.textContent = this.currentPage;
+      if (this.currentPage === 1) {
+        this.leftContent.classList.add('initial-dropcap');
+      } else {
+        this.leftContent.classList.remove('initial-dropcap');
+      }
     }
     this.rightPage.style.display = 'none';
   }
@@ -757,6 +762,11 @@ class EnhancedDigitalFlipbook {
       this.leftContent.innerHTML = leftPageData.pageData.content;
       this.leftPageNumber.textContent = this.currentPage;
       this.leftPage.style.display = 'block';
+      if (this.currentPage === 1) {
+        this.leftContent.classList.add('initial-dropcap');
+      } else {
+        this.leftContent.classList.remove('initial-dropcap');
+      }
     }
     
     // Load right page
