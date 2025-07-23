@@ -108,10 +108,10 @@ class EnhancedDigitalFlipbook {
       // Always hide loading screen
       this.hideLoading();
       
-      // Ensure the book container is visible if we have content
-      if (this.pages && this.pages.length > 0) {
-        this.bookContainer.classList.remove('hidden');
-      }
+      // Ensure the book cover is visible initially, and other elements are hidden
+      this.bookCover.classList.remove('hidden');
+      this.bookContainer.classList.add('hidden');
+      this.tableOfContents.classList.add('hidden');
     }
   }
   
@@ -456,7 +456,7 @@ class EnhancedDigitalFlipbook {
     this.menuBtn.addEventListener('click', () => this.showTableOfContents());
     this.closeBookBtn.addEventListener('click', () => this.closeBook());
     this.closeTocBtn.addEventListener('click', () => this.hideTableOfContents());
-    this.startReadingBtn.addEventListener('click', () => this.startReading());
+    this.startReadingBtn.addEventListener('click', () => this.continueReading());
     
     // Modal controls
     const modalClose = document.getElementById('modal-close');
@@ -625,7 +625,7 @@ class EnhancedDigitalFlipbook {
     this.bookCover.style.opacity = '1';
   }
   
-  startReading() {
+  continueReading() {
     this.tableOfContents.classList.add('hidden');
     this.bookContainer.classList.remove('hidden');
     this.currentPage = 1;
